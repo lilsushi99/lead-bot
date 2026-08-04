@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import config from './server/config/config';
 import authRouter from './server/routes/authRoutes';
 import operationsRouter from './server/routes/operationsRoutes';
@@ -14,7 +13,7 @@ import { checkDbConnection } from './server/database/db';
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = config.port || 3000;
 
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -43,14 +42,17 @@ async function startServer() {
     });
   });
 
-  // Vite middleware setup
-  if (process.env.NODE_ENV !== 'production') {
+  // Vite middleware setup (Only loaded in development mode)
+  if (config.env !== 'production' && process.env.NODE_ENV !== 'production') {
+    console.log('⚡ [Server] Running in DEVELOPMENT mode - Initializing Vite middleware...');
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
+    console.log('🚀 [Server] Running in PRODUCTION mode - Serving static assets from dist/...');
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -59,7 +61,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log(`🚀 [Server] Express running on http://0.0.0.0:${PORT} (${config.env} mode)`);
   });
 }
 

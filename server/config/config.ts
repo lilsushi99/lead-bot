@@ -56,8 +56,15 @@ export interface AppConfig {
 }
 
 export function validateAndLoadConfig(): AppConfig {
-  const env = process.env.NODE_ENV || 'development';
-  const port = parseInt(process.env.PORT || '3300', 10);
+  const isProd =
+    process.env.NODE_ENV === 'production' ||
+    (typeof __filename !== 'undefined' &&
+      (__filename.includes('dist') || __filename.endsWith('.cjs')));
+
+  const env = isProd ? 'production' : (process.env.NODE_ENV || 'development');
+  process.env.NODE_ENV = env;
+
+  const port = parseInt(process.env.PORT || '3000', 10);
   const appName = process.env.APP_NAME || 'Nexus ERP Enterprise';
   const appUrl = process.env.APP_URL || `http://localhost:${port}`;
   const clientUrl = process.env.CLIENT_URL || `http://localhost:${port}`;
@@ -86,7 +93,7 @@ export function validateAndLoadConfig(): AppConfig {
   const logLevel = process.env.LOG_LEVEL || 'info';
   const corsOrigin = process.env.CORS_ORIGIN || '*';
   const timezone = process.env.TIMEZONE || 'UTC+01:00';
-  const geminiApiKey = process.env.GEMINI_API_KEY || ''; 
+  const geminiApiKey = process.env.GEMINI_API_KEY || '';
   const geminiModel = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
   // Startup validation checks
